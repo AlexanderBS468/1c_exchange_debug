@@ -73,6 +73,20 @@ class ListImportFiles {
 		}
 	}
 
+	public function getSortFiles(&$arDir) {
+		/**
+		 * @var $arDir \Bitrix\Main\IO\Directory
+		 * @var $dirItem \Bitrix\Main\IO\Directory
+		 */
+		foreach($arDir as $keyDirItem => &$dirItem){
+			$dirItem->fileName = $dirItem->getName();
+		}
+
+		usort($arDir, function($a, $b) {
+			return $a->fileName <=> $b->fileName;
+		});
+	}
+
 	public function getListFiles() {
 		return $this->arResulter["FILES"];
 	}
@@ -96,6 +110,7 @@ class ListImportFiles {
 		$dirChild = new Directory($dirItem->getPath());
 		if ($dirChild->isExists()) {
 			$arDir = $dirChild->getChildren();
+			self::getSortFiles($arDir);
 			foreach($arDir as $dirItem){
 				self::getFiles($dirItem);
 				if ($dirItem->isDirectory()) {
