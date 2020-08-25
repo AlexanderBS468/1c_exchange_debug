@@ -50,7 +50,7 @@ $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 
 	}
 
-	function start(file)
+	function start(file, callback)
 	{
 		document.getElementById("main").style.display='block';
 		load.innerHTML="<b>Загрузка</b>...<img align='center'                 src='http://gifanimation.ru/images/ludi/17_3.gif' width='30'/>"
@@ -63,10 +63,10 @@ $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 		timer.innerHTML="";
 		if (file=="company.xml") {zup_import=true;}
 		log.innerHTML="<b>Импорт "+file+"</b><hr>";
-		query_1c(file)
+		query_1c(file, callback)
 	}
 
-	function query_1c(file)
+	function query_1c(file, callback)
 	{
 		var import_1c=createHttpRequest();
 		if (zup_import==true)
@@ -111,10 +111,11 @@ $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 					status="continue"
 					proccess=false;
 					timer.innerHTML="<hr>Время выгрузки: <b>"+minute+" мин. "+m_second+" сек.</b>";
+					callback && callback();
 				}
 				else
 				{
-					query_1c(file);
+					query_1c(file, callback);
 				}
 			}
 
@@ -153,6 +154,31 @@ $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 		rest.send(null);
 
 	}
+
+	function startPromise(file)
+	{
+		return new Promise(function(resolve, reject) {
+			start(file, resolve);
+		});
+	}
+
+	function getImportFiles()
+	{
+		return fetch('/debug.php')
+			.then(function(response) {
+				return response.json();
+			});
+	}
+
+	async function startAllFiles()
+	{
+		const files = await getImportFiles();
+
+		for (let i = 0; i < files.length; i++) {
+			await startPromise(files[i]);
+		}
+	}
+
 
 </script>
 
