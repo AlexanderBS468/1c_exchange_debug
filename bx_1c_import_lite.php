@@ -3,6 +3,8 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.ph
 header("Content-type:text/html; charset=UTF-8");
 
 // D7
+use Bitrix\Main\IO\Directory;
+use Bitrix\Main\IO\File;
 use Bitrix\Main\Application;
 $request = Application::getInstance()->getContext()->getRequest();
 
@@ -11,12 +13,12 @@ $arlistValues = $request->getValues();
 if (isset($arlistValues['getlistfiles']) && $arlistValues['getlistfiles'] === 'Y') {
 	$pathDir = '/upload/1c_catalog/Reports/Exchange_(1234)2020-08-24/000000001';
 
-	ToolsDebug::getListFiles($pathDir);
+	ToolsDebug::getImportListFiles($pathDir);
 }
 
 class ToolsDebug
 {
-	public static function getListFiles($pathDir) {
+	public static function getImportListFiles($pathDir) {
 		$docRoot = Application::getDocumentRoot();
 
 		$arg = [
@@ -24,9 +26,11 @@ class ToolsDebug
 			'absolute_path' => true,
 		];
 		$objClass = new ListImportFiles($arg);
-		$files = $objClass->getListFiles();
-		$test = \Bitrix\Main\Web\Json::encode($files);
-		echo $test;
+		$files = $objClass->getJSONListFiles();
+//		$files = $objClass->getListFiles();
+//		pr($files);
+		echo $files;
+		die();
 	}
 
 }
@@ -71,6 +75,10 @@ class ListImportFiles {
 
 	public function getListFiles() {
 		return $this->arResulter["FILES"];
+	}
+
+	public function getJSONListFiles() {
+		return \Bitrix\Main\Web\Json::encode($this->arResulter["FILES"]);
 	}
 
 	protected function getFiles($dirItem) {
