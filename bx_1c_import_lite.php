@@ -1,6 +1,36 @@
 <?
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
-header("Content-type:text/html; charset=windows-1251");
+header("Content-type:text/html; charset=UTF-8");
+
+// D7
+use Bitrix\Main\Application;
+$request = Application::getInstance()->getContext()->getRequest();
+
+$arlistValues = $request->getValues();
+
+if (isset($arlistValues['getlistfiles']) && $arlistValues['getlistfiles'] === 'Y') {
+	$pathDir = '/upload/1c_catalog/Reports/Exchange_(1234)2020-08-24/000000001';
+
+	ToolsDebug::getListFiles($pathDir);
+}
+
+class ToolsDebug
+{
+	public static function getListFiles($pathDir) {
+		$docRoot = Application::getDocumentRoot();
+
+		$arg = [
+			'path' => $docRoot . $pathDir,
+			'absolute_path' => true,
+		];
+		$objClass = new ListImportFiles($arg);
+		$files = $objClass->getListFiles();
+		$test = \Bitrix\Main\Web\Json::encode($files);
+		echo $test;
+	}
+
+}
+
 $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 ?>
 <html>
