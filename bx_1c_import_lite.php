@@ -55,7 +55,7 @@ class ListImportFiles {
 			$arDir = $dir->getChildren();
 			self::getParentFiles($arDir);
 			self::getDirectories($arDir);
-			self::getSortList($arDir, 'dir');
+//			self::getSortList($arDir, 'dir');
 
 			foreach($arDir as $dirItem) {
 				self::getFiles($dirItem);
@@ -264,7 +264,9 @@ global $APPLICATION;
 					status="continue"
 					proccess=false;
 					timer.innerHTML="<hr>Время выгрузки: <b>"+minute+" мин. "+m_second+" сек.</b>";
-					callback && callback();
+					if (import_1c.responseText.substr(0,7)=="success") {
+						callback && callback();
+					}
 				}
 				else
 				{
