@@ -8,10 +8,15 @@ use Bitrix\Main\IO\File;
 use Bitrix\Main\Application;
 $request = Application::getInstance()->getContext()->getRequest();
 
-$arlistValues = $request->getValues();
+if (method_exists($request, 'getValues')) {
+	//Нет такого метода в 18 версии ядра
+	$arlistValues = $request->getValues();
+} else {
+	$arlistValues["getlistfiles"] = $request->get("getlistfiles");
+}
 
 if (isset($arlistValues['getlistfiles']) && $arlistValues['getlistfiles'] === 'Y') {
-	$pathDir = '/upload/1c_catalog/Reports/Exchange_(1234)2020-08-24/000000001';
+	$pathDir = '/upload/1c_catalog/Exchange_2020-08-18-debug/000000001';
 
 	ToolsDebug::getImportListFiles($pathDir);
 }
@@ -49,14 +54,28 @@ class ListImportFiles {
 		if ($dir->isExists()) {
 			$arDir = $dir->getChildren();
 			self::getParentFiles($arDir);
-			foreach($arDir as $dirItem){
+			self::getDirectories($arDir);
+			self::getSortList($arDir, 'dir');
+
+			foreach($arDir as $dirItem) {
 				self::getFiles($dirItem);
-				if ($dirItem->isDirectory()) {
-					$this->arResulter['DIRECTORY'][] = $dirItem;
-					self::getChildDir($dirItem);
-				}
+				self::getChildDir($dirItem);
 			}
-		};
+		}
+	}
+
+	protected function getDirectories(&$arDir) {
+		/**
+		 * @var $arDir \Bitrix\Main\IO\Directory
+		 * @var $dirItem \Bitrix\Main\IO\Directory
+		 */
+		foreach($arDir as &$dirItem){
+			if ($dirItem->isDirectory()) {
+				$dirItem->dirName = $dirItem->getName();
+				$this->arResulter['DIRECTORY'][] = $dirItem;
+			}
+		}
+		unset($dirItem);
 	}
 
 	public function getParentFiles(&$arDir) {
@@ -73,18 +92,18 @@ class ListImportFiles {
 		}
 	}
 
-	public function getSortFiles(&$arDir) {
-		/**
-		 * @var $arDir \Bitrix\Main\IO\Directory
-		 * @var $dirItem \Bitrix\Main\IO\Directory
-		 */
-		foreach($arDir as $keyDirItem => &$dirItem){
-			$dirItem->fileName = $dirItem->getName();
+	public function getSortList(&$arList, $typeItem = 'file') {
+		if ($typeItem === 'file') {
+			usort($arList, function($a, $b) {
+				return $a->fileName <=> $b->fileName;
+			});
 		}
 
-		usort($arDir, function($a, $b) {
-			return $a->fileName <=> $b->fileName;
-		});
+		if ($typeItem === 'dir') {
+			usort($arList, function($a, $b) {
+				return $a->dirName <=> $b->dirName;
+			});
+		}
 	}
 
 	public function getListFiles() {
@@ -110,7 +129,17 @@ class ListImportFiles {
 		$dirChild = new Directory($dirItem->getPath());
 		if ($dirChild->isExists()) {
 			$arDir = $dirChild->getChildren();
-			self::getSortFiles($arDir);
+
+			/**
+			 * @var $arDir \Bitrix\Main\IO\Directory
+			 * @var $dirItem \Bitrix\Main\IO\Directory
+			 */
+			foreach($arDir as $keyDirItem => &$dirItem){
+				$dirItem->fileName = $dirItem->getName();
+			}
+			unset($dirItem);
+
+			self::getSortList($arDir, 'file');
 			foreach($arDir as $dirItem){
 				self::getFiles($dirItem);
 				if ($dirItem->isDirectory()) {
