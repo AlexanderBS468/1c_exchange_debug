@@ -24,6 +24,39 @@ if ($_REQUEST["DEL_HL"] === 'Y' && false) {
 	pr($resultDel);
 }
 
+if ($_REQUEST["TEST_PROPS"] === 'Y') {
+	getHlBlocks();
+}
+
+function getHlBlocks() {
+	$hlblocks = HlBlockEntityList('all');
+	pr($hlblocks);
+
+	$hlblock = HighloadBlockTable::getList(array(
+		"filter" => array(
+			"TABLE_NAME" => 'b_%\_',
+		)))->fetchAll();
+	pr($hlblock);
+
+	$arProps = \Bitrix\Iblock\PropertyTable::getList(array(
+		'select' => array('*'),
+		'filter' => array(
+			'IBLOCK_ID' => [20, 21],
+			'USER_TYPE' => 'directory',
+		)
+	))->fetchAll();
+	pr($arProps);
+
+	foreach ($arProps as $prop) {
+		if ($prop["USER_TYPE_SETTINGS_LIST"]["TABLE_NAME"]) {
+			if (preg_match('/b_+.*_$/', $prop["USER_TYPE_SETTINGS_LIST"]["TABLE_NAME"])
+				|| preg_match('/b_+.*__$/', $prop["USER_TYPE_SETTINGS_LIST"]["TABLE_NAME"]) ) {
+				pr($prop);
+			}
+		}
+	}
+}
+
 if ($_REQUEST["GO_TABLE"] === 'Y') {
 	$arProps = \Bitrix\Iblock\PropertyTable::getList(array(
 		'select' => array('*'),
