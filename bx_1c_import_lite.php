@@ -13,11 +13,13 @@ if (method_exists($request, 'getValues')) {
 	$arlistValues = $request->getValues();
 } else {
 	$arlistValues["getlistfiles"] = $request->get("getlistfiles");
+	$arlistValues["path"] = $request->get("path");
 }
 
 if (isset($arlistValues['getlistfiles']) && $arlistValues['getlistfiles'] === 'Y') {
-	$pathDir = '/upload/1c_catalog/Exchange_2020-08-18-debug/000000001';
-
+	$pathDir = $arlistValues["path"];
+//'/upload/1c_catalog/Exchange_2020-08-18-debug/000000001'
+//   /upload/1c_catalog0
 	ToolsDebug::getImportListFiles($pathDir);
 }
 
@@ -26,14 +28,17 @@ class ToolsDebug
 	public static function getImportListFiles($pathDir) {
 		$docRoot = Application::getDocumentRoot();
 
+//		$filename = preg_replace("#^(/tmp/|upload/1c/webdata|/upload/)#", "", $pathDir);
 		$arg = [
 			'path' => $docRoot . $pathDir,
+			'fileName' => $_SERVER["DOCUMENT_ROOT"]."/".COption::GetOptionString("main", "upload_dir", "upload") . '/',
 			'absolute_path' => true,
 		];
+//		define("BX24_HOST_NAME", true);
+//		$_SESSION["BX_CML2_IMPORT"]["TEMP_DIR"] = $arg["fileName"];
 		$objClass = new ListImportFiles($arg);
 		$files = $objClass->getJSONListFiles();
 //		$files = $objClass->getListFiles();
-//		pr($files);die();
 		echo $files;
 		die();
 	}
@@ -82,6 +87,7 @@ class ListImportFiles {
 		foreach($arDir as $keyDirItem => &$dirItem){
 			if ($dirItem->isFile() && preg_match('/.*\.xml$/', $dirItem->getName())) {
 				if ($this->option['absolute_path']) {
+					//todo fix only "/upload/1c_catalog"
 					$pattern = '/' . preg_replace('/\//', '\/', \Bitrix\Main\Application::getDocumentRoot() . '/upload/1c_catalog')  . '/';
 					$this->arResulter['FILES'][] = preg_replace($pattern, '', $dirItem->getPath());
 				} else {
@@ -117,6 +123,7 @@ class ListImportFiles {
 	protected function getFiles($dirItem) {
 		if ($dirItem->isFile() && preg_match('/.*\.xml$/', $dirItem->getName())) {
 			if ($this->option['absolute_path']) {
+				//todo fix only "/upload/1c_catalog"
 				$pattern = '/' . preg_replace('/\//', '\/', \Bitrix\Main\Application::getDocumentRoot() . '/upload/1c_catalog')  . '/';
 				$this->arResulter['FILES'][] = preg_replace($pattern, '', $dirItem->getPath());
 			} else {
@@ -155,13 +162,16 @@ $_SESSION["BX_CML2_IMPORT"]["NS"]["STEP"]=0;
 global $APPLICATION;
 ?>
 <html>
-<a style="color:red;" href="javascript:startAllFiles()">импорт Всех файлов</a>
+<label for="pathfiles">Абсолютный путь</label>
+<?//todo add checkboxes for xml type?>
+<input type="text" name="pathfiles" id="pathfiles" placeholder="путь до файлов" size="70">
+<a style="color:red;" href="javascript:getPathFiles()">импорт Всех файлов</a>
 <a  href="javascript:start('import.xml')">импорт import.xml</a>
-<a href="javascript:start('offers.xml')">импорт offers.xml</a>
+<a href="javascript:start('offers-test.xml')">импорт offers.xml</a>
 <a href="javascript:start('company.xml')"> импорт company.xml</a>
 <a style='color:red;' href="javascript:reset()">обнулить шаг</a>
 <a style='color:red;' href="javascript:status='stop'">остановить импорт</a><hr>
-<div id='main' style='display:none;width:400;font-size:12;border:1px solid #ADC3D5; padding:5'>
+<div id='main' style='display:none;width:1400;font-size:12;border:1px solid #ADC3D5; padding:5'>
 	<div id="log_files"></div>
 	<div id="log"></div>
 	<div align=right id="load"></div>
@@ -244,7 +254,7 @@ global $APPLICATION;
 			{
 				if ((import_1c.responseText.substr(0,8 )!="progress")&&(import_1c.responseText.substr(0,7)!="success"))
 				{
-					error_text="<em>Ошибка в процессе выгрузки</em><div style='width:270;font-size:11;border:1px solid black;background-color:#ADC3D5;padding:5'>"+import_1c.responseText+"</div>"
+					error_text="<em>Ошибка в процессе выгрузки</em><div style='width:1270;font-size:11;border:1px solid black;background-color:#ADC3D5;padding:5'>"+import_1c.responseText+"</div>"
 					log.innerHTML=a+"Шаг "+i+": "+error_text;
 					status="error";
 				}
@@ -317,9 +327,9 @@ global $APPLICATION;
 		});
 	}
 
-	function getImportFiles()
+	function getImportFiles(path)
 	{
-		var curScriptName = "<?=$APPLICATION->GetCurPage(true);?>" + "?getlistfiles=Y";
+		var curScriptName = "<?=$APPLICATION->GetCurPage(true);?>" + "?getlistfiles=Y&path=" + path;
 		var options = {
 				method: "POST",
 				mode: "cors",
@@ -335,20 +345,35 @@ global $APPLICATION;
 			});
 	}
 
-	async function startAllFiles()
+	async function startAllFiles(path)
 	{
 		var logFiles = document.getElementById("log_files");
 		// let block = document.createElement('li');
 		let tmp;
 
-		const files = await getImportFiles();
-
+		const files = await getImportFiles(path);
+		//todo if files === null
+		//todo add checker path
+		//todo add ablosute path
+		//todo fix /1c_catalog/1c_catalog/ import
+		console.log(path);
+		console.log(files);
 		for (let i = 0; i < files.length; i++) {
 			tmp = logFiles.innerHTML;
-			logFiles.innerHTML = tmp + "<b>Файл "+files[i]+"</b><hr>";
+			logFiles.innerHTML = tmp + "<b>Импортирован файл "+files[i]+"</b><hr>";
 			// block.innerHTML = "<b>Файл "+files[i]+"</b><hr>";
 			// logFiles.appendChild(block);
-			await startPromise(files[i]);
+			// await startPromise(files[i]);
+		}
+	}
+
+	function getPathFiles()
+	{
+		var input = document.getElementById("pathfiles");
+		if (input.value != '') {
+			startAllFiles(input.value);
+		} else {
+			alert('Не указан путь!');
 		}
 	}
 
