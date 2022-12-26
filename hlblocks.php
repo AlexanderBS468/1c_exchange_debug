@@ -22,6 +22,15 @@ foreach ($arHlBlocks as $elem) {
 	$strSql = 'DROP TABLE ' . $elem["TABLE_NAME"];
 	$result = $DB->Query($strSql);
 	$res[$elem["ID"]] = $result->result;
+	if ($result->result) {
+		$hlblock = HighloadBlockTable::getList(array(
+			"filter" => array(
+				"=TABLE_NAME" => $elem["TABLE_NAME"],
+			)))->fetch();
+		if (isset($hlblock["ID"]) && !empty($hlblock["ID"])) {
+			HighloadBlockTable::delete($hlblock["ID"]);
+		}
+	}
 }
 pr('result');
 pr($res);
@@ -41,3 +50,34 @@ function getHlTables()
 
 	return $arResult;
 }
+
+//debug
+
+
+//function truncateHlBlockEntity($hlblocks) {
+//	global $DB;
+//	$strSql = 'TRUNCATE TABLE b_hlblock_entity';
+//	$result = $DB->Query($strSql);
+//	return $result->result;
+//}
+
+//$hlblocks = HlBlockEntityList('all');
+//$resultDel = delHlBlockEntity($hlblocks);
+//pr($resultDel);
+//die;
+////b_hlblock_entity
+//function HlBlockEntityList($arg) {
+//	$hlblock = [];
+//	if ($arg === 'all') {
+//		$hlblock = HighloadBlockTable::getList()->fetchAll();
+//	}
+//	return $hlblock;
+//}
+//
+//function delHlBlockEntity($hlblocks) {
+//	$result = [];
+//	foreach ($hlblocks as $item) {
+//		$result[$item["ID"]] = HighloadBlockTable::delete($item["ID"]);
+//	}
+//	return $result;
+//}
